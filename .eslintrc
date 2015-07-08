@@ -1,0 +1,13 @@
+{
+    ecmaFeatures: {
+        jsx: true,
+		modules: true ,
+		"blockBindings": true,
+		destructuring: true,
+		arrowFunctions: true,
+		defaultParams: true,
+		classes: true,
+		superInFunctions: true,
+		templateStrings: true
+    }
+}
