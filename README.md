@@ -31,7 +31,7 @@ In a browser, go to:
 
 ----
 
-There are several test files, as described in the sections below. From the browser point of view they behave very much the same. Each `.html` file loads the `.js` with the matching name. 
+There are several test files, as described in the sections below. From the browser point of view they behave very much the same. Each `.html` file loads the `.js` with the matching name. It is interesting to compare the `.js` files in between them to see the small differences in between them.
 
 All are transpiled on the client side using [Babel](http://babeljs.io/).  Client-side transpiling (transpilation ??) is not recommended for production, this is just an example.   
 
@@ -76,9 +76,11 @@ Mithril works differently.  When some external action happens, be it a user inte
 
 As a simple debugging tool, a snapshot of the store is shown below the horizontal line.
 
+It is tempting to merge the `TodoStore` and `Todo` classes into a single class and then register that merged class as an Alt store and mount it as a Mithril component.  I haven't tried but I don't think it would be a good idea.  Both `alt.createStore` and `m.mount` create instances of that class, each its own separate instance.  There are ways around that, but I don't think it would make matters any clearer.
+
 ###ma1.html
 
-In this version, the `autoredraw` feature of Mithril has been bypassed by setting the event listener on the DOM element itself instead of through the `onxxx` pseudo-attribute that Mithril uses.  In order to do that, the DOM element was retrieved via the `config` pseudo-attribute.  In this way, Mithril will not redraw the page automatically.
+In this version, the `autoredraw` feature of Mithril has been bypassed by setting the event listener on the DOM element itself instead of through the `onxxx` pseudo-attribute that Mithril uses.  In order to do that, the DOM element was retrieved via the `config` pseudo-attribute and set with the `addListener` function.  In this way, Mithril will not redraw the page automatically.
 
 Then I listen to change notifications from the store:
 

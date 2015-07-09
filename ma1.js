@@ -27,6 +27,11 @@ class TodoStore {
 
 let todoStore = alt.createStore(TodoStore);
 
+let addListener = (name, fn) => (element, isInit, context) => {
+	if (isInit) return;
+	element[name] = fn;
+	context.onunload = () => element[name] = null;
+};
 
 class Todo {
 	constructor() {
@@ -43,44 +48,28 @@ class Todo {
 	static view(todo) {
 		return [
 			m("input", {
-				config: (element, isInit, context) => {
-					if (isInit) return;
-					element.onchange = ev => actions.saveDescr(ev.target.value);
-					context.onunload = () => element.onclick = null;
-				},
+				config: addListener("onchange", ev => actions.saveDescr(ev.target.value)),
 				value: todo.descr
 			}),
 			m("button", {
-				config: (element, isInit, context) => {
-					if (isInit) return;
-					element.onclick = () => actions.addItem(todo.descr);
-					context.onunload = () => element.onclick = null;
-				}
+				config: addListener("onclick", () => actions.addItem(todo.descr))
 			}, "Add"),
 			m("table", todo.list.map((task, index) => m("tr", [
-					m("td",
-						m("input[type=checkbox]", {
-							config: (element, isInit, context) => {
-								if (isInit) return;
-								element.onclick = ev => {
-									actions.checkItem({
-										index,
-										done: ev.target.checked
-									});
-								};
-								context.onunload = () => element.onclick = null;
-							},
-							checked: task.done
-						})
-					),
-					m("td", {
-						style: {
-							textDecoration: task.done ? "line-through" : "none"
-						}
-						}, task.descr)
-					])
-				)
-			),
+				m("td",
+					m("input[type=checkbox]", {
+						config: addListener("onclick", ev => actions.checkItem({
+							index,
+							done: ev.target.checked
+						})),
+						checked: task.done
+					})
+				),
+				m("td", {
+					style: {
+						textDecoration: task.done ? "line-through" : "none"
+					}
+				}, task.descr)
+			]))),
 			m("hr"),
 			m("pre", JSON.stringify(JSON.parse(alt.takeSnapshot()), null, 2))
 
