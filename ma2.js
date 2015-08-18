@@ -80,7 +80,7 @@ class Todo {
 	}
 }
 
-m.mount(document, {
+m.mount(document.body, {
 	controller: Todo,
 	view: Todo.view
 });

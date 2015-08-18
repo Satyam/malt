@@ -1,31 +1,81 @@
-/*globals m, document, Alt */
+/*globals m, document, Alt, _ */
 
 var alt = new Alt();
 
 const actions = alt.generateActions("addItem", "checkItem", "saveDescr");
 
 class TodoStore {
-	constructor () {
+	constructor() {
 		this.list = [];
 		this.descr = "";
 		this.bindActions(actions);
 	}
-	onAddItem (descr) {
+	onAddItem(descr) {
 		this.descr = "";
 		this.list.push({
 			descr,
 			done: false
 		});
 	}
-	onCheckItem (data) {
+	onCheckItem(data) {
 		this.list[data.index].done = data.done;
 	}
-	onSaveDescr (descr) {
+	onSaveDescr(descr) {
 		this.descr = descr;
 	}
 }
 
 let todoStore = alt.createStore(TodoStore);
+
+class DataContainer {
+	constructor(...args) {
+		this._args = args;
+		let stores = this.getStores();
+		if (_.isPlainObject(stores)) {
+			_.each(stores, (store, key) => {
+				this[key] = store.getState();
+				store.listen(state => {
+					_.merge(this[key], state);
+					this.render();
+				});
+			});
+		} else {
+			if (!_.isArray(stores)) {
+				stores = [stores];
+			}
+			_.each(stores, store => {
+				_.merge(this, store.getState());
+				store.listen(state => {
+					_.merge(this, state);
+					this.render();
+				});
+			});
+		}
+	}
+	render() {
+		m.render(this._containerEl, this.content(this, ...this._args));
+	}
+	content() {
+		return "";
+	}
+	static view(ctrl, ...args) {
+		if (args[0][0] === ctrl) {
+			// see: https://github.com/lhorie/mithril.js/issues/765
+			args.shift();
+		}
+		if (!_.isEqual(args, ctrl._args)) {
+			ctrl._args = args;
+			ctrl.render();
+		}
+		return m("div.data-container", {
+			config: (el, isOld) => {
+				if (isOld) return;
+				ctrl._containerEl = el;
+				ctrl.render();
+			}
+		});
+	}
+}
 
 let addListener = (name, fn) => (element, isInit, context) => {
 	if (isInit) return;
@@ -33,19 +83,11 @@ let addListener = (name, fn) => (element, isInit, context) => {
 	context.onunload = () => element[name] = null;
 };
 
-class Todo {
-	constructor() {
-		var initialState = todoStore.getState();
-		this.list = initialState.list;
-		this.descr = initialState.descr;
-		todoStore.listen(state => {
-			m.startComputation();
-			this.list = state.list;
-			this.descr = state.descr;
-			m.endComputation();
-		});
+class Todo extends DataContainer {
+	getStores () {
+		return todoStore;
 	}
-	static view(todo) {
+	content(todo) {
 		return [
 			m("input", {
 				config: addListener("onchange", ev => actions.saveDescr(ev.target.value)),
