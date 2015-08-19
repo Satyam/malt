@@ -109,7 +109,7 @@ In `ma1.html` the rendering process always started from the root.  One of the ad
 
 To achieve that, I created a `DataContainer` class which handles the data for the contained component.  The concept is described [here](https://www.youtube.com/watch?v=KYzlpRvWZ6c&feature=youtu.be&t=22m48s).  To better understand it, lets look into the `Todo` class towards the bottom of the source file.
 
-The `Todo` class is simpler than the one in `ma1.html`, it's main differences are:  
+The [`Todo` class](https://github.com/Satyam/malt/blob/master/mca.js#L86) is simpler than the one in `ma1.html`, it's main differences are:  
 
 0. It inherits from `DataContainer`.
 0. There is no need for a constructor to initialize the state and listen to changes in the store, as that is now handled by `DataContainer`.
@@ -118,7 +118,7 @@ The `Todo` class is simpler than the one in `ma1.html`, it's main differences ar
 
 The `content` method is the very same as the `view` method in `ma1.html`, the only difference is in its name. If you diff `ma1.js` and `mca.js` the contents of the two methods are exactly the same.  As in `ma1.js` it does not use the `onXxxxx` pseudo-properties but attaches the event listeners directly to the DOM elements to avoid Mithril's auto-redraw.
 
-The trick is in the `DataContainer` class.  
+The trick is in the [`DataContainer` class](https://github.com/Satyam/malt/blob/master/mca.js#L30).  
 
 ```js	
 	static view(ctrl, ...args) {
@@ -132,7 +132,7 @@ The trick is in the `DataContainer` class.
 	}
 ```
 
-The static `view` method simply draws a `div.data-container` element but no children. In a real case, both the type of element and its className should be configurable. It then uses the `config` pseudo-attribute to get a reference to this element and finally calls the `render` method.
+The static [`view` method](https://github.com/Satyam/malt/blob/master/mca.js#L61) simply draws a `div.data-container` element but no children. In a real case, both the type of element and its className should be configurable. It then uses the `config` pseudo-attribute to get a reference to this element and finally calls the [`render` method](https://github.com/Satyam/malt/blob/master/mca.js#L55).
 
 ```js
 	render() {
@@ -142,9 +142,9 @@ The static `view` method simply draws a `div.data-container` element but no chil
 
 The `render` method of `DataContainer` uses `m.render` to render into the data container element the actual contents of the component.  This is produced by the `content` method of the `Todo` class.  An empty `content` method is provided as a backstop.
 
-I've tried to deal with parameterized components, though I am not sure if I am doing it right.  Both the controller and the view of a component may receive extra arguments.  That is why you see the `...args` argument both in the constructor and in the `view` to be able to catch those.  There is an issue with Mithril where non-components (not used with `m.component`) receive a reference to the controller twice, that's why it first has to be discarded.  Something I am also not clear about is whether the extra arguments to a parameterized component may change in between successive redraws.  I assumed (probably wrong) that they might so I check whether the extra arguments have changed in between calls and re-render if they have.
+I've tried to deal with parameterized components, though I am not sure if I am doing it right.  Both the controller and the view of a component may receive extra arguments.  That is why you see the `...args` argument both in the constructor and in the `view` to be able to catch those.  There is an issue with Mithril where non-components (not used with `m.component`) receive a reference to the controller twice, that's why it [first has to be discarded](https://github.com/Satyam/malt/blob/master/mca.js#L62).  Something I am also not clear about is whether the extra arguments to a parameterized component may change in between successive redraws.  I assumed (probably wrong) that they might so I check whether the [extra arguments have changed](https://github.com/Satyam/malt/blob/master/mca.js#L66) in between calls and re-render if they have.
 
-In the constructor I set up the links in between the stores and the view. Basically I do the following:
+In the [constructor](https://github.com/Satyam/malt/blob/master/mca.js#L31) I set up the links in between the stores and the view. Basically I do the following:
 
 ```js
 	_.merge(this, store.getState());
@@ -156,9 +156,9 @@ In the constructor I set up the links in between the stores and the view. Basica
 
 I call the `getState` method of the store and merge its initial state into the controller.  Then I listen to changes in the state of the store and, when detected, I merge the new state and call `render` to reflect it in the UI.  Most of the code in the constructor deals with different ways in which `getStores` can return the stores it connects with, either a single store, an array of stores or an object which lists the stores along with mapping.
 
-This is the big difference in between `ma1.html` and `mca.html`.  In the former, I called Mithril `startComputation/endComputation` to trigger Mithril's native redraw mechanism, which always starts at the root.   Here, I only redraw the components affected in response to a signal from the store that something has changed.  In React, this is triggered by the `setState` method of `React.Component` which, besides merging the new state of the store into the component, it flags the component for redrawing.
+This is the big difference in between `ma1.html` and `mca.html`.  In the former, I called [Mithril `startComputation/endComputation`](https://github.com/Satyam/malt/blob/master/ma1.js#L41) to trigger Mithril's native redraw mechanism, which always starts at the root.   Here, I only redraw the components affected in response to a signal from the store that something has changed.  In React, this is triggered by the `setState` method of `React.Component` which, besides merging the new state of the store into the component, it flags the component for redrawing.
 
 I tried to emulate the two mechanisms that React uses to redraw its components.  
 
-* One is the use of the change signals from the stores to redraw the view.  This is equivalent of using React `setState` method.   
-* The other is in response to changes higher up in the hierarchy.  Presumably this would be reflected by changes in the extra arguments provided to parameterized components so that the component is redrawn when these parameters change.  This would be equivalent to changes in `this.props` in React. I don't think I got this last part right.
+* One is the use of the change signals from the stores to [redraw the view](https://github.com/Satyam/malt/blob/master/mca.js#L48).  This is equivalent of using React `setState` method.   
+* The other is in response to changes higher up in the hierarchy.  Presumably this would be reflected by [changes in the extra arguments](https://github.com/Satyam/malt/blob/master/mca.js#L66) provided to parameterized components so that the component is redrawn when these parameters change.  This would be equivalent to changes in `this.props` in React. I don't think I got this last part right.
